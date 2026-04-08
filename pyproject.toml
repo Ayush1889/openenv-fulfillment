@@ -3,6 +3,7 @@ name = "openenv-fulfillment"
 version = "0.1.0"
 description = "OpenEnv warehouse fulfillment environment"
 authors = [{ name = "Your Name" }]
+requires-python = ">=3.10"
 
 dependencies = [
     "fastapi",
