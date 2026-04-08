@@ -1,8 +1,20 @@
+import os
+from openai import OpenAI
 from env.environment import FulfillmentEnv
 from grader.fulfillment_grader import FulfillmentGrader
 from tasks.easy import setup_easy
 from tasks.medium import setup_medium
 from tasks.hard import setup_hard
+
+# ENV VARIABLES
+API_BASE_URL = os.getenv("API_BASE_URL")
+MODEL_NAME = os.getenv("MODEL_NAME")
+HF_TOKEN = os.getenv("HF_TOKEN")
+
+client = OpenAI(
+    base_url=API_BASE_URL,
+    api_key=HF_TOKEN
+)
 
 tasks = {
     "easy": setup_easy,
@@ -16,7 +28,10 @@ def run_task(name, setup):
 
     state = env.state()
 
-    for _ in range(50):
+    print(f"[START] task={name}")
+
+    for step in range(50):
+        # simple policy (you can later replace with LLM)
         if state.pending_orders:
             action = {
                 "type": "ship",
@@ -25,13 +40,17 @@ def run_task(name, setup):
         else:
             action = {"type": "wait", "payload": {}}
 
-        state, _, done, _ = env.step(type("A", (), action))
+        state, reward, done, _ = env.step(type("A", (), action))
+
+        print(f"[STEP] step={step} action={action} reward={reward}")
+
         if done:
             break
 
     grader = FulfillmentGrader()
     score = grader.grade(env)
-    print(f"{name}: {score:.3f}")
+
+    print(f"[END] task={name} score={score}")
 
 def main():
     for name, setup in tasks.items():
