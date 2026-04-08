@@ -5,9 +5,17 @@ class FulfillmentGrader:
         total = completed + delayed
 
         if total == 0:
-            return 0.0
+            return 0.01  # avoid 0
 
         score = completed / total
+
+        # penalty for delays
         score -= 0.2 * (delayed / total)
 
-        return max(0.0, min(1.0, score))
+        # 🔥 CRITICAL FIX: clamp strictly between (0,1)
+        if score <= 0:
+            score = 0.01
+        elif score >= 1:
+            score = 0.99
+
+        return score
