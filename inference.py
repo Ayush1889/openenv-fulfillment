@@ -7,35 +7,46 @@ from tasks.easy import setup_easy
 from tasks.medium import setup_medium
 from tasks.hard import setup_hard
 
-# REQUIRED ENV VARIABLES (IMPORTANT)
+# ENV VARIABLES
 API_BASE_URL = os.getenv("API_BASE_URL")
 API_KEY = os.getenv("API_KEY")
-MODEL_NAME = os.getenv("MODEL_NAME")
+MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
 
-# OpenAI client using proxy
-client = OpenAI(
-    base_url=API_BASE_URL,
-    api_key=API_KEY
-)
+# SAFE CLIENT INIT (DO NOT CRASH)
+client = None
+if API_KEY and API_BASE_URL:
+    try:
+        client = OpenAI(
+            base_url=API_BASE_URL,
+            api_key=API_KEY
+        )
+    except Exception:
+        client = None
 
-# Tasks
+# TASKS
 tasks = {
     "easy": setup_easy,
     "medium": setup_medium,
     "hard": setup_hard,
 }
 
-# REQUIRED LLM CALL
+# SAFE LLM CALL
 def call_llm():
-    response = client.chat.completions.create(
-        model=MODEL_NAME,
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": "Say OK"}
-        ],
-        max_tokens=5
-    )
-    return response.choices[0].message.content
+    if client is None:
+        return "no_client"
+
+    try:
+        response = client.chat.completions.create(
+            model=MODEL_NAME,
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": "Say OK"}
+            ],
+            max_tokens=5
+        )
+        return response.choices[0].message.content
+    except Exception:
+        return "llm_error"
 
 
 def run_task(name, setup):
@@ -48,13 +59,9 @@ def run_task(name, setup):
 
     for step in range(50):
 
-        # REQUIRED: LLM CALL THROUGH PROXY
-        try:
-            llm_output = call_llm()
-        except Exception as e:
-            llm_output = "error"
+        # SAFE LLM CALL
+        llm_output = call_llm()
 
-        # Simple policy (you can improve later)
         if state.pending_orders:
             action = {
                 "type": "ship",
@@ -63,7 +70,6 @@ def run_task(name, setup):
         else:
             action = {"type": "wait", "payload": {}}
 
-        # Execute step
         state, reward, done, _ = env.step(type("A", (), action))
 
         print(f"[STEP] step={step} action={action} reward={reward} llm={llm_output}")
