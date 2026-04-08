@@ -1,0 +1,14 @@
+[project]
+name = "openenv-fulfillment"
+version = "0.1.0"
+description = "OpenEnv warehouse fulfillment environment"
+authors = [{ name = "Your Name" }]
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pydantic",
+    "openai"
+]
+
+[tool.openenv]
+entrypoint = "api:app"
