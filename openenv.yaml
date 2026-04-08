@@ -1,0 +1,17 @@
+name: fulfillment-env
+version: 1.0
+
+entrypoint: api:app
+
+observation_space:
+  type: State
+
+action_space:
+  type: Action
+
+tasks:
+  - easy
+  - medium
+  - hard
+
+episode_length: 50
